@@ -12,41 +12,63 @@ import cors from "cors";
 connectDB();
 
 const app = express();
+
+/* ---------------- Security Middlewares ---------------- */
 app.use(helmet());
 app.use(express.json());
 app.use(cookieParser());
 
+/* ---------------- CORS Configuration ---------------- */
 const allowedOrigins = [
   "http://localhost:3000",
   "https://taskmanagement-ruddy-nine.vercel.app"
 ];
 
 const corsOptionsDelegate = (req, callback) => {
-  let corsOptions;
-  if (!req.header("Origin")) {
-    corsOptions = { origin: true }; // allow requests without Origin (like curl/postman)
-  } else if (allowedOrigins.includes(req.header("Origin"))) {
-    corsOptions = { origin: true, credentials: true };
-  } else {
-    corsOptions = { origin: false }; // block
+  const origin = req.header("Origin");
+
+  if (!origin) {
+    // Allow Postman / curl
+    return callback(null, { origin: true });
   }
-  callback(null, corsOptions);
+
+  if (allowedOrigins.includes(origin)) {
+    return callback(null, {
+      origin: true,
+      credentials: true
+    });
+  }
+
+  return callback(null, { origin: false });
 };
 
 app.use(cors(corsOptionsDelegate));
-app.options("*", cors(corsOptionsDelegate));
 
-app.use(rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100
-}));
+/* ---------------- Rate Limiter ---------------- */
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: false
+  })
+);
 
+/* ---------------- Routes ---------------- */
 app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);
 
+/* ---------------- 404 Handler ---------------- */
+app.use((req, res) => {
+  res.status(404).json({ message: "Route Not Found" });
+});
+
+/* ---------------- Global Error Handler ---------------- */
 app.use(errorHandler);
 
+/* ---------------- Server Start ---------------- */
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () =>
-  console.log(`Server running on port ${PORT}`)
-);
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
