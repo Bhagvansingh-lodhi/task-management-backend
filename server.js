@@ -25,14 +25,13 @@ app.use(cors({
     if (!origin) return callback(null, true);
 
     if (allowedOrigins.includes(origin)) {
-      callback(null, true);
+      return callback(null, true);
     } else {
-      callback(new Error("Not allowed by CORS"));
+      return callback(null, false);
     }
   },
   credentials: true,
 }));
-
 app.options("*", cors());
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
