@@ -17,10 +17,12 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use(cors({
-  origin: "http://localhost:3000",
+  origin: [
+    "http://localhost:3000",
+    "https://taskmanagement-ruddy-nine.vercel.app"
+  ],
   credentials: true
 }));
-
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100
